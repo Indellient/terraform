@@ -43,9 +43,6 @@ type ApplyGraphBuilder struct {
 	// DisableReduce, if true, will not reduce the graph. Great for testing.
 	DisableReduce bool
 
-	// Destroy, if true, represents a pure destroy operation
-	Destroy bool
-
 	// Validate will do structural validation of the graph.
 	Validate bool
 }
@@ -133,14 +130,11 @@ func (b *ApplyGraphBuilder) Steps() []GraphTransformer {
 			State:   b.State,
 			Schemas: b.Schemas,
 		},
-		GraphTransformIf(
-			func() bool { return !b.Destroy },
-			&CBDEdgeTransformer{
-				Config:  b.Config,
-				State:   b.State,
-				Schemas: b.Schemas,
-			},
-		),
+		&CBDEdgeTransformer{
+			Config:  b.Config,
+			State:   b.State,
+			Schemas: b.Schemas,
+		},
 
 		// Provisioner-related transformations
 		&MissingProvisionerTransformer{Provisioners: b.Components.ResourceProvisioners()},
@@ -178,9 +172,9 @@ func (b *ApplyGraphBuilder) Steps() []GraphTransformer {
 		// Prune unreferenced values, which may have interpolations that can't
 		// be resolved.
 		GraphTransformIf(
-			func() bool { return b.Destroy },
+			func() bool { return true },
 			GraphTransformMulti(
-				&DestroyValueReferenceTransformer{},
+				//&DestroyValueReferenceTransformer{},
 				&DestroyOutputTransformer{},
 				&PruneUnusedValuesTransformer{},
 			),
